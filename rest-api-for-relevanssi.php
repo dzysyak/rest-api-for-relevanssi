@@ -4,7 +4,7 @@
  * Description: Adds REST API Endpoint for Relevanssi queries
  * Author: Sergiy Dzysyak
  * Author URI: http://erlycoder.com
- * Version: 1.8
+ * Version: 1.11
  * License: GPL2+
  *
  * Usage:	https://[your domain]/wp-json/relevanssi/v1/search?keyword=query
@@ -30,6 +30,7 @@
  **/
 
 defined( 'ABSPATH' ) or die( 'No script kiddies please!' );
+
 
 if ( !class_exists( 'rest_api_plugin_for_relevanssi' ) ) {
 class rest_api_plugin_for_relevanssi{
@@ -61,6 +62,11 @@ class rest_api_plugin_for_relevanssi{
 	 * @return WP_REST_Response|WP_Error Request response.
 	 */
 	public function relevanssi_search_callback( WP_REST_Request $request ) {
+		include_once(ABSPATH.'wp-admin/includes/plugin.php');
+		if ( !is_plugin_active( 'relevanssi/relevanssi.php' ) &&  !is_plugin_active( 'relevanssi-premium/relevanssi.php' )) {
+			return new WP_Error( 'No results', 'Relevanssi plugin is not installed' );
+		}
+	
 		// Get API query parameters
 		$parameters = $request->get_query_params();
 		// Default query parameters
@@ -84,14 +90,20 @@ class rest_api_plugin_for_relevanssi{
 		    $args['paged'] = intval($parameters['page']);
 		}
         
+		// Parse incomming type parameter.
+		$_post_types_in = explode(",", $parameters['type']);
+		array_walk($_post_types_in, function(&$item, $key){ $item = trim($item); });
+		
 		// Get all registerred post types for further check.
-		$post_types = array(); $ptypes = get_post_types(array(), 'objects' );
-		foreach($ptypes as $ptk=>$ptv){ $post_types[] = $ptk; }
-		unset($ptypes);
+		$post_types = array_merge(['any'], array_keys(get_post_types())); 
 		
 		// Query only posts of certain type. By default search returns posts of all types.
-		if(isset( $parameters['type'] ) &&  in_array($parameters['type'], $post_types)){
-		    $args['post_type'] = $parameters['type'];
+		if(count(array_intersect($_post_types_in, $post_types))==count($_post_types_in)){
+			$args['post_type'] = $_post_types_in;
+		}
+		
+		if(in_array('any', $args['post_type'])){
+			$args['post_type'] = 'any';
 		}
 		
 		// Language with Polylang
@@ -168,14 +180,23 @@ class rest_api_plugin_for_relevanssi{
 		}
 		
 		// Create controller to access posts via REST API
-	    $ctrl = new WP_REST_Posts_Controller($args['post_type']);
+	    $ctrl = [];
+		if($args['post_type'] == 'any'){
+			foreach($post_types as $type){
+				$ctrl[$type] = new WP_REST_Posts_Controller($type);
+			}
+		}else{
+			foreach($args['post_type'] as $type){
+				$ctrl[$type] = new WP_REST_Posts_Controller($type);
+			}
+		}
 
 		// Collect results and preare response	    
 		$posts = array();
 		while( $search_query->have_posts()){ 
 			$search_query->the_post();
-			$data    = $ctrl->prepare_item_for_response( $search_query->post, $request );
-			$posts[] = $ctrl->prepare_response_for_collection( $data );
+			$data    = $ctrl[$search_query->post->post_type]->prepare_item_for_response( $search_query->post, $request );
+			$posts[] = $ctrl[$search_query->post->post_type]->prepare_response_for_collection( $data );
 		}
 		
 		// Language with WPML
@@ -186,7 +207,7 @@ class rest_api_plugin_for_relevanssi{
 		// Return search results or error if nothing found.
         if(!empty($posts)){
             $resp = new WP_REST_Response($posts, 200);
-            $resp->set_headers(["Access-Control-Allow-Headers"=>"Authorization, Content-Type", "Access-Control-Expose-Headers"=>"X-WP-Total, X-WP-TotalPages, X-WP-Type", "X-WP-Total"=>$search_query->found_posts, "X-WP-TotalPages"=>$search_query->max_num_pages, "X-WP-Type"=>$args['post_type']]);
+            $resp->set_headers(["Access-Control-Allow-Headers"=>"Authorization, Content-Type", "Access-Control-Expose-Headers"=>"X-WP-Total, X-WP-TotalPages, X-WP-Type", "X-WP-Total"=>$search_query->found_posts, "X-WP-TotalPages"=>$search_query->max_num_pages, "X-WP-Type"=>(is_array($args['post_type']))?implode(",", $args['post_type']):'any']);
             return $resp;
         }else{
             return new WP_Error( 'No results', 'Nothing found' );
@@ -200,10 +221,7 @@ class rest_api_plugin_for_relevanssi{
      * This plugin requires Relevanssi plugin.
      */
     public function plugin_install() {
-        if ( !is_plugin_active( 'relevanssi/relevanssi.php' ) &&  !is_plugin_active( 'relevanssi-premium/relevanssi.php' ) && current_user_can( 'activate_plugins' ) ) {
-		    // Stop activation redirect and show error
-		    wp_die('Sorry, but this plugin requires the Relevanssi Plugin to be installed and active. <br><a href="' . admin_url( 'plugins.php' ) . '">&laquo; Return to Plugins</a>');
-		}
+        
     }
 }
 

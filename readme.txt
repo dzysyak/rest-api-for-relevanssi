@@ -2,8 +2,8 @@
 Contributors: dzysyak
 Tags: relevanssi, search, api, rest api
 Requires at least: 4.6
-Tested up to: 5.7
-Stable tag: 1.8
+Tested up to: 5.8
+Stable tag: 1.11
 Requires PHP: 5.6
 License: GPLv2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -108,6 +108,17 @@ You can find answers and solutions in our [Knowledge base](https://erlycoder.com
 Yes, you can submit your request on our [Contact page](https://erlycoder.com/support/ "Report bug or suggest a feature").
 
 == Changelog ==
+
+= 1.11 =
+* Fixed issues with type=any parameter.
+* Fixed issues with multitype requests (Example: type=post,page).
+* Default search type is changed to 'any'. Be carefull updating the plugin.
+
+= 1.10 =
+* Fixed bug "Call to undefined function is_plugin_active()".
+
+= 1.9 =
+* We decided to remove strict requirement for Relevanssi plugin to be installed before API plugin. Instead API will return error if Relevanssi is not installed.
 
 = 1.8 =
 * Added "page" and "per_page" parameters. Old ones "page" and "per_page" are still supported, but we strongly recommend to to use new ones.
