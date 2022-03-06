@@ -4,7 +4,7 @@
  * Description: Adds REST API Endpoint for Relevanssi queries
  * Author: Sergiy Dzysyak
  * Author URI: http://erlycoder.com
- * Version: 1.11
+ * Version: 1.12
  * License: GPL2+
  *
  * Usage:	https://[your domain]/wp-json/relevanssi/v1/search?keyword=query
@@ -100,6 +100,8 @@ class rest_api_plugin_for_relevanssi{
 		// Query only posts of certain type. By default search returns posts of all types.
 		if(count(array_intersect($_post_types_in, $post_types))==count($_post_types_in)){
 			$args['post_type'] = $_post_types_in;
+		}else{
+			$args['post_type'] = ['any'];
 		}
 		
 		if(in_array('any', $args['post_type'])){
