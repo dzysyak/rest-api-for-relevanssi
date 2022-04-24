@@ -4,7 +4,7 @@
  * Description: Adds REST API Endpoint for Relevanssi queries
  * Author: Sergiy Dzysyak
  * Author URI: http://erlycoder.com
- * Version: 1.12
+ * Version: 1.14
  * License: GPL2+
  *
  * Usage:	https://[your domain]/wp-json/relevanssi/v1/search?keyword=query
@@ -91,11 +91,11 @@ class rest_api_plugin_for_relevanssi{
 		}
         
 		// Parse incomming type parameter.
-		$_post_types_in = explode(",", $parameters['type']);
+		$_post_types_in = (isset($parameters['type']))?explode(",", $parameters['type']):['any'];
 		array_walk($_post_types_in, function(&$item, $key){ $item = trim($item); });
 		
 		// Get all registerred post types for further check.
-		$post_types = array_merge(['any'], array_keys(get_post_types())); 
+		$post_types = array_keys(get_post_types()); 
 		
 		// Query only posts of certain type. By default search returns posts of all types.
 		if(count(array_intersect($_post_types_in, $post_types))==count($_post_types_in)){
@@ -114,7 +114,7 @@ class rest_api_plugin_for_relevanssi{
 		}
 		
 		// Language with WPML
-		if(isset($parameters['lang']) && function_exists('icl_object_id')){
+		if(isset($parameters['lang']) && class_exists('WPML\FP\Fns')){
 			global $sitepress;
 			$get_lang = "";
 			
@@ -197,12 +197,13 @@ class rest_api_plugin_for_relevanssi{
 		$posts = array();
 		while( $search_query->have_posts()){ 
 			$search_query->the_post();
+			
 			$data    = $ctrl[$search_query->post->post_type]->prepare_item_for_response( $search_query->post, $request );
 			$posts[] = $ctrl[$search_query->post->post_type]->prepare_response_for_collection( $data );
 		}
 		
 		// Language with WPML
-		if(isset($parameters['lang']) && function_exists('icl_object_id')){
+		if(isset($parameters['lang']) && class_exists('WPML\FP\Fns')){
 			$sitepress->switch_lang($get_lang);
 		}
 		

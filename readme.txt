@@ -2,8 +2,8 @@
 Contributors: dzysyak
 Tags: relevanssi, search, api, rest api
 Requires at least: 4.6
-Tested up to: 5.8.2
-Stable tag: 1.12
+Tested up to: 5.9.3
+Stable tag: 1.14
 Requires PHP: 5.6
 License: GPLv2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -108,6 +108,10 @@ You can find answers and solutions in our [Knowledge base](https://erlycoder.com
 Yes, you can submit your request on our [Contact page](https://erlycoder.com/support/ "Report bug or suggest a feature").
 
 == Changelog ==
+
+= 1.14 =
+* Minor fix in post type handling.
+* WPML & Polylang compatibility fixes.
 
 = 1.12 =
 * Minor fix in post type handling.
