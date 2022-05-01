@@ -22,7 +22,7 @@
  *			https://[your domain]/wp-json/relevanssi/v1/search?keyword=test&tax_query[0][taxonomy]=category&tax_query[0][field]=id&tax_query[0][terms]=3&tax_query[0][operator]=NOT IN
  *
  *			For multilingual websites (WPML & Polylang):
- * 			https://[your domain]/wp-json/relevanssi/v1/search?keyword=query&lang=en
+ * 			https://[your domain]/wp-json/relevanssi/v1/search?keyword=query&lng=en
  *
  *			Results order:
  *			http://[your domain]/wp-json/relevanssi/v1/search?keyword=test&type=post&orderby=modified&order=DESC
@@ -109,12 +109,12 @@ class rest_api_plugin_for_relevanssi{
 		}
 		
 		// Language with WPML
-		if(isset($parameters['lang']) && class_exists('WPML\FP\Fns')){
+		if(isset($parameters['lng']) && class_exists('WPML\FP\Fns')){
 			global $sitepress;
 			$get_lang = "";
 			
 			$get_lang = $sitepress->get_current_language();
-			$sitepress->switch_lang($parameters['lang']);
+			$sitepress->switch_lang($parameters['lng']);
 		}
 		
 		// Taxonomy query
@@ -152,8 +152,8 @@ class rest_api_plugin_for_relevanssi{
 		}
 		
 		// Language with Polylang
-		if(!empty($parameters['lang']) && class_exists('Polylang')){
-			$lang = get_term_by('slug', sanitize_text_field($parameters['lang']), 'language');
+		if(!empty($parameters['lng']) && class_exists('Polylang')){
+			$lang = get_term_by('slug', sanitize_text_field($parameters['lng']), 'language');
 			if(empty($lang)) return new WP_Error( 'No results', 'Incorrect language' );
 			
 			$args['tax_query'][] = ['taxonomy'=>'language', 'field'=>'term_taxonomy_id', 'terms'=>$lang->term_id];
@@ -206,7 +206,7 @@ class rest_api_plugin_for_relevanssi{
 		}
 		
 		// Language with WPML
-		if(isset($parameters['lang']) && class_exists('WPML\FP\Fns')){
+		if(isset($parameters['lng']) && class_exists('WPML\FP\Fns')){
 			$sitepress->switch_lang($get_lang);
 		}
 		

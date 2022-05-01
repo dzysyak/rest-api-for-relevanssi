@@ -48,7 +48,7 @@ As far as this plugin provides API for Relevanssi plugin, it should be installed
  
 *For multilingual websites (WPML & Polylang):*
 
- * 	https://[your domain]/wp-json/relevanssi/v1/search?keyword=query&lang=en
+ * 	https://[your domain]/wp-json/relevanssi/v1/search?keyword=query&lng=en
  
 * Results order:*
  *	https://[your domain]/wp-json/relevanssi/v1/search?keyword=test&type=post&orderby=modified&order=DESC
