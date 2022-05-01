@@ -4,7 +4,7 @@
  * Description: Adds REST API Endpoint for Relevanssi queries
  * Author: Sergiy Dzysyak
  * Author URI: http://erlycoder.com
- * Version: 1.14
+ * Version: 1.15
  * License: GPL2+
  *
  * Usage:	https://[your domain]/wp-json/relevanssi/v1/search?keyword=query
