@@ -108,12 +108,8 @@ class rest_api_plugin_for_relevanssi{
 			$args['post_type'] = 'any';
 		}
 		
-		// Language with Polylang
-		if(isset($parameters['lang']) && class_exists('Polylang')){
-		    $args['lang'] = $parameters['lang'];
-		}
-		
 		// Language with WPML
+		/*
 		if(isset($parameters['lang']) && class_exists('WPML\FP\Fns')){
 			global $sitepress;
 			$get_lang = "";
@@ -121,6 +117,7 @@ class rest_api_plugin_for_relevanssi{
 			$get_lang = $sitepress->get_current_language();
 			$sitepress->switch_lang($parameters['lang']);
 		}
+		*/
 		
 		// Taxonomy query
 		if(isset( $parameters['tax_query'] ) &&  is_array($parameters['tax_query'])){
@@ -154,6 +151,14 @@ class rest_api_plugin_for_relevanssi{
 				$args['tax_query'][] = $qr;
 			}
 			
+		}
+		
+		// Language with Polylang
+		if(!empty($parameters['lang']) && class_exists('Polylang')){
+			$lang = get_term_by('slug', sanitize_text_field($parameters['lang']), 'language');
+			if(empty($lang)) return new WP_Error( 'No results', 'Incorrect language' );
+			
+			$args['tax_query'][] = ['taxonomy'=>'language', 'field'=>'term_taxonomy_id', 'terms'=>$lang->term_id];
 		}
 		
 		if(isset( $parameters['meta_key'] ) &&  is_string($parameters['meta_key'])){
@@ -203,9 +208,11 @@ class rest_api_plugin_for_relevanssi{
 		}
 		
 		// Language with WPML
+		/*
 		if(isset($parameters['lang']) && class_exists('WPML\FP\Fns')){
 			$sitepress->switch_lang($get_lang);
 		}
+		*/
 		
 		// Return search results or error if nothing found.
         if(!empty($posts)){
