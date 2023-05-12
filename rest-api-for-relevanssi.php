@@ -96,6 +96,9 @@ class rest_api_plugin_for_relevanssi{
 		
 		// Get all registerred post types for further check.
 		$post_types = array_keys(get_post_types(array(), 'names'));
+
+		// Get all registerred taxonomies for further check
+		$taxonomies = get_taxonomies(array(), 'names');
 		
 		// Query only posts of certain type. By default search returns posts of all types.
 		if(count(array_intersect($_post_types_in, $post_types))==count($_post_types_in)){
@@ -197,6 +200,10 @@ class rest_api_plugin_for_relevanssi{
 		if($args['post_type'] == 'any'){
 			foreach($post_types as $type){
 				$ctrl[$type] = new WP_REST_Posts_Controller($type);
+			}
+
+			foreach($taxonomies as $taxonomy){
+				$ctrl[$taxonomy] = new WP_REST_Posts_Controller($taxonomy);
 			}
 		}else{
 			foreach($args['post_type'] as $type){
