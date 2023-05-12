@@ -4,7 +4,7 @@
  * Description: Adds REST API Endpoint for Relevanssi queries
  * Author: Sergiy Dzysyak
  * Author URI: http://erlycoder.com
- * Version: 1.15
+ * Version: 1.17
  * License: GPL2+
  *
  * Usage:	https://[your domain]/wp-json/relevanssi/v1/search?keyword=query
@@ -64,7 +64,7 @@ class rest_api_plugin_for_relevanssi{
 	public function relevanssi_search_callback( WP_REST_Request $request ) {
 		include_once(ABSPATH.'wp-admin/includes/plugin.php');
 		if ( !is_plugin_active( 'relevanssi/relevanssi.php' ) &&  !is_plugin_active( 'relevanssi-premium/relevanssi.php' )) {
-			return new WP_Error( 'No results', 'Relevanssi plugin is not installed' );
+			return new WP_Error('No results', 'Relevanssi plugin is not installed' );
 		}
 	
 		// Get API query parameters
@@ -95,7 +95,7 @@ class rest_api_plugin_for_relevanssi{
 		array_walk($_post_types_in, function(&$item, $key){ $item = trim($item); });
 		
 		// Get all registerred post types for further check.
-		$post_types = array_keys(get_post_types()); 
+		$post_types = array_keys(get_post_types(array(), 'names'));
 		
 		// Query only posts of certain type. By default search returns posts of all types.
 		if(count(array_intersect($_post_types_in, $post_types))==count($_post_types_in)){
@@ -154,7 +154,9 @@ class rest_api_plugin_for_relevanssi{
 		// Language with Polylang
 		if(!empty($parameters['lng']) && class_exists('Polylang')){
 			$lang = get_term_by('slug', sanitize_text_field($parameters['lng']), 'language');
-			if(empty($lang)) return new WP_Error( 'No results', 'Incorrect language' );
+			if(empty($lang)){ 
+				return new WP_REST_Response(array('message' => 'No results', 'data' => 'Incorrect language'), 400);
+			}
 			
 			$args['tax_query'][] = ['taxonomy'=>'language', 'field'=>'term_taxonomy_id', 'terms'=>$lang->term_id];
 		}
@@ -175,17 +177,23 @@ class rest_api_plugin_for_relevanssi{
 		if(!empty($parameters['keyword'])){
             $args['s'] = $parameters['keyword'];
 		}else{
-		    return new WP_Error( 'No results', 'Empty search keyword' );
+		    return new WP_REST_Response(array( 'message' => 'No results', 'data' => 'Empty search keyword' ), 400);
 		}
 		
 		// Run search query
 		$search_query = new WP_Query( $args );
 		if(function_exists('relevanssi_do_query')) {
-		  relevanssi_do_query($search_query);
+			//print_r($search_query);
+
+			apply_filters( 'relevanssi_modify_wp_query', $search_query);
+
+			//print_r($search_query);
+			relevanssi_do_query($search_query);
+			//die();
 		}
 		
-		// Create controller to access posts via REST API
-	    $ctrl = [];
+		$ctrl = [];
+		// Create controller to access posts via REST API	
 		if($args['post_type'] == 'any'){
 			foreach($post_types as $type){
 				$ctrl[$type] = new WP_REST_Posts_Controller($type);
@@ -195,12 +203,14 @@ class rest_api_plugin_for_relevanssi{
 				$ctrl[$type] = new WP_REST_Posts_Controller($type);
 			}
 		}
-
+	    
 		// Collect results and preare response	    
 		$posts = array();
 		while( $search_query->have_posts()){ 
 			$search_query->the_post();
-			
+
+			if(!isset($ctrl[$search_query->post->post_type])) $ctrl[$search_query->post->post_type] = new WP_REST_Posts_Controller($search_query->post->post_type);
+		
 			$data    = $ctrl[$search_query->post->post_type]->prepare_item_for_response( $search_query->post, $request );
 			$posts[] = $ctrl[$search_query->post->post_type]->prepare_response_for_collection( $data );
 		}
@@ -216,7 +226,7 @@ class rest_api_plugin_for_relevanssi{
             $resp->set_headers(["Access-Control-Allow-Headers"=>"Authorization, Content-Type", "Access-Control-Expose-Headers"=>"X-WP-Total, X-WP-TotalPages, X-WP-Type", "X-WP-Total"=>$search_query->found_posts, "X-WP-TotalPages"=>$search_query->max_num_pages, "X-WP-Type"=>(is_array($args['post_type']))?implode(",", $args['post_type']):'any']);
             return $resp;
         }else{
-            return new WP_Error( 'No results', 'Nothing found' );
+            return new WP_REST_Response([], 200);
         }
 
 	}
@@ -233,4 +243,3 @@ class rest_api_plugin_for_relevanssi{
 
 $rja = new rest_api_plugin_for_relevanssi();
 }
-
