@@ -110,6 +110,9 @@ Yes, you can submit your request on our [Contact page](https://erlycoder.com/sup
 
 == Changelog ==
 
+= 1.18 =
+* Advanced Custom Fields plugin support is improved
+
 = 1.17 =
 * Taxonomy index bug fix.
 

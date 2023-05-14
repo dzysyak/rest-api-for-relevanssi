@@ -4,7 +4,7 @@
  * Description: Adds REST API Endpoint for Relevanssi queries
  * Author: Sergiy Dzysyak
  * Author URI: http://erlycoder.com
- * Version: 1.17
+ * Version: 1.18
  * License: GPL2+
  *
  * Usage:	https://[your domain]/wp-json/relevanssi/v1/search?keyword=query
@@ -47,7 +47,7 @@ class rest_api_plugin_for_relevanssi{
 	 * Register search query API route and entry point
 	 */
 	public function rest_api_for_relevanssi_filter_add_filters() {
-	  // Register new route for search queries
+		  // Register new route for search queries
 	  register_rest_route( 'relevanssi/v1', 'search', array(
 		'methods'  => 'GET,POST',
 		'callback' => [$this, 'relevanssi_search_callback'],
@@ -95,10 +95,10 @@ class rest_api_plugin_for_relevanssi{
 		array_walk($_post_types_in, function(&$item, $key){ $item = trim($item); });
 		
 		// Get all registerred post types for further check.
-		$post_types = array_keys(get_post_types(array(), 'names'));
+		$post_types = get_post_types(array(), 'names');
 
-		// Get all registerred taxonomies for further check
-		$taxonomies = get_taxonomies(array(), 'names');
+		// Get all registerred taxonomies for further check, if ACF plugin is installed
+		if(is_plugin_active( 'acf-to-rest-api-master/class-acf-to-rest-api.php' )) $taxonomies = get_taxonomies(array(), 'names');
 		
 		// Query only posts of certain type. By default search returns posts of all types.
 		if(count(array_intersect($_post_types_in, $post_types))==count($_post_types_in)){
@@ -186,13 +186,8 @@ class rest_api_plugin_for_relevanssi{
 		// Run search query
 		$search_query = new WP_Query( $args );
 		if(function_exists('relevanssi_do_query')) {
-			//print_r($search_query);
-
 			apply_filters( 'relevanssi_modify_wp_query', $search_query);
-
-			//print_r($search_query);
 			relevanssi_do_query($search_query);
-			//die();
 		}
 		
 		$ctrl = [];
@@ -202,7 +197,8 @@ class rest_api_plugin_for_relevanssi{
 				$ctrl[$type] = new WP_REST_Posts_Controller($type);
 			}
 
-			foreach($taxonomies as $taxonomy){
+			// Include taxonomies, if ACF plugin is installed
+			if(is_plugin_active( 'acf-to-rest-api-master/class-acf-to-rest-api.php' )) foreach($taxonomies as $taxonomy){
 				$ctrl[$taxonomy] = new WP_REST_Posts_Controller($taxonomy);
 			}
 		}else{
@@ -244,7 +240,10 @@ class rest_api_plugin_for_relevanssi{
      * This plugin requires Relevanssi plugin.
      */
     public function plugin_install() {
-        
+        if ( !is_plugin_active( 'relevanssi/relevanssi.php' ) &&  !is_plugin_active( 'relevanssi-premium/relevanssi.php' ) && current_user_can( 'activate_plugins' ) ) {
+		    // Stop activation redirect and show error
+		    wp_die('Sorry, but this plugin requires the Relevanssi Plugin to be installed and active. <br><a href="' . admin_url( 'plugins.php' ) . '">&laquo; Return to Plugins</a>');
+		}
     }
 }
 
